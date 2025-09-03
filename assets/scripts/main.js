@@ -321,16 +321,121 @@ class Game {
         if (!this.gameOver) {
             this.gameOver = true;
             this.finalScore = this.score;
-            if(this.obstacles.length <= 0){
-                this.sound.play(this.sound.win);
-                this.message1 = "Nailed it!";
-                this.message2 = "Can you do it faster than " + this.formatTimer() + " seconds?";
+            
+            // Check for high score
+            if (this.finalScore > this.highScore) {
+                this.highScore = this.finalScore;
+                localStorage.setItem('flappyHighScore', this.highScore.toString());
+                this.message1 = "NEW HIGH SCORE!";
             } else {
-                this.sound.play(this.sound.lose);
-                this.message1 = "Getting rusty?";
-                this.message2 = "Collision time " + this.formatTimer() + " seconds!";
+                if(this.obstacles.length <= 0){
+                    this.sound.play(this.sound.win);
+                    this.message1 = "Nailed it!";
+                    this.message2 = "Can you do it faster than " + this.formatTimer() + " seconds?";
+                } else {
+                    this.sound.play(this.sound.lose);
+                    this.message1 = "Getting rusty?";
+                    this.message2 = "Collision time " + this.formatTimer() + " seconds!";
+                    
+                    // Create explosion particles
+                    this.createExplosion(this.player.collisionX, this.player.collisionY, 20, 'orange');
+                }
             }
         }
+    }
+    
+    createFloatingText(x, y, text, color) {
+        this.visualEffects.push(new VisualEffect(this, x, y, text, color));
+    }
+    
+    createExplosion(x, y, amount, color) {
+        for (let i = 0; i < amount; i++) {
+            this.particles.push(new Particle(this, x, y, color));
+        }
+    }
+    
+    togglePause() {
+        this.gamePaused = !this.gamePaused;
+        if (this.pauseButton) {
+            this.pauseButton.innerHTML = this.gamePaused ? 
+                '<i class="fas fa-play"></i>' : 
+                '<i class="fas fa-pause"></i>';
+        }
+    }
+    
+    drawPauseMenu() {
+        // Draw semi-transparent overlay
+        this.ctx.save();
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        this.ctx.fillRect(0, 0, this.width, this.height);
+        
+        // Draw pause menu text
+        this.ctx.textAlign = 'center';
+        this.ctx.fillStyle = 'white';
+        
+        this.ctx.font = this.largeFont + 'px Bungee';
+        this.ctx.fillText('GAME PAUSED', this.width * 0.5, this.height * 0.3);
+        
+        this.ctx.font = this.smallFont + 'px Bungee';
+        this.ctx.fillText('Press P to resume', this.width * 0.5, this.height * 0.4);
+        
+        // Draw difficulty selection
+        this.ctx.fillText('SELECT DIFFICULTY:', this.width * 0.5, this.height * 0.55);
+        
+        // Draw difficulty buttons
+        const buttonWidth = this.width * 0.2;
+        const buttonHeight = this.height * 0.07;
+        const buttonY = this.height * 0.65;
+        const buttonSpacing = this.width * 0.02;
+        
+        const difficultyLabels = ['EASY', 'MEDIUM', 'HARD'];
+        const buttonColors = ['#44cc44', '#cccc44', '#cc4444'];
+        
+        for (let i = 0; i < 3; i++) {
+            const buttonX = this.width * 0.5 - buttonWidth * 1.5 - buttonSpacing + (buttonWidth + buttonSpacing) * i;
+            
+            // Draw button background (highlight current difficulty)
+            this.ctx.fillStyle = buttonColors[i];
+            if (this.difficultyLevel === i + 1) {
+                this.ctx.globalAlpha = 1;
+                this.ctx.strokeStyle = 'white';
+                this.ctx.lineWidth = 3;
+                this.ctx.strokeRect(buttonX, buttonY, buttonWidth, buttonHeight);
+            } else {
+                this.ctx.globalAlpha = 0.7;
+            }
+            
+            this.ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
+            
+            // Draw button text
+            this.ctx.globalAlpha = 1;
+            this.ctx.fillStyle = 'white';
+            this.ctx.fillText(difficultyLabels[i], buttonX + buttonWidth * 0.5, buttonY + buttonHeight * 0.65);
+            
+            // Store button positions for click detection
+            this['difficultyButton' + (i+1)] = {
+                x: buttonX,
+                y: buttonY,
+                width: buttonWidth,
+                height: buttonHeight
+            };
+        }
+        
+        this.ctx.restore();
+    }
+    
+    handleDifficultyClick(x, y) {
+        for (let i = 1; i <= 3; i++) {
+            const button = this['difficultyButton' + i];
+            if (button && 
+                x >= button.x && x <= button.x + button.width &&
+                y >= button.y && y <= button.y + button.height) {
+                this.setDifficulty(i);
+                this.togglePause();
+                return true;
+            }
+        }
+        return false;
     }
     drawStatusText() {
         this.ctx.save();
