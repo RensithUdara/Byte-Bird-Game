@@ -20,6 +20,12 @@ class Player {
         this.charging;
         this.image = document.getElementById('player_fish');
         this.frameY = 0;
+        this.score = 0;
+        this.shieldActive = false;
+        this.shieldTimer = 0;
+        this.shieldOpacity = 0.5;
+        this.shieldPulse = 0.02;
+        this.shieldPulseDirection = 1;
     }
     draw(){
         this.game.ctx.drawImage(this.image, 0, this.frameY * this.spriteHeight, this.spriteWidth, this.spriteHeight, this.x, this.y, this.width, this.height);
