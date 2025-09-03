@@ -439,10 +439,19 @@ class Game {
     }
     drawStatusText() {
         this.ctx.save();
-        this.ctx.fillText("Score: " + (this.gameOver ? this.finalScore : this.score), this.width - 10 - this.smallFont, this.largeFont); // Update this line
+        
+        // Score and High Score
+        this.ctx.fillText("Score: " + (this.gameOver ? this.finalScore : this.score), this.width - 10 - this.smallFont, this.largeFont);
+        this.ctx.fillText("Best: " + this.highScore, this.width - 10 - this.smallFont, this.largeFont * 2);
+        
+        // Timer and difficulty
         this.ctx.textAlign = 'left';
         this.ctx.fillText("Timer: " + this.formatTimer(), this.smallFont, this.largeFont);
+        
+        const diffLabels = ['EASY', 'MEDIUM', 'HARD'];
+        this.ctx.fillText("Difficulty: " + diffLabels[this.difficultyLevel - 1], this.smallFont, this.largeFont * 2);
 
+        // Game over screen
         if (this.gameOver) {
             this.ctx.textAlign = 'center';
             this.ctx.font = this.largeFont + 'px Bungee';
@@ -452,25 +461,45 @@ class Game {
             this.ctx.fillText("Press 'R' to try again", this.width * 0.5, this.height * 0.5, this.width);
         }
 
-        // Flashing effect when energy is critically low
+        // Energy bar
         let shouldFlash = this.player.energy <= this.player.minEnergy && Math.floor(Date.now() / 300) % 2 === 0;
 
         for (let i = 0; i < this.player.energy; i++) {
             let energyRatio = this.player.energy / this.player.maxEnergy;
-
-            // Generate a reddish gradient from dark red to bright orange
-            let red = Math.floor(255 * (1 - energyRatio));  // More red as energy decreases
-            let green = Math.floor(100 * energyRatio);      // Slight greenish tint removed
+            let red = Math.floor(255 * (1 - energyRatio));
+            let green = Math.floor(100 * energyRatio);
             let color = `rgb(${255}, ${green}, ${red})`;
 
-            this.ctx.fillStyle = shouldFlash ? 'darkred' : color;  // Flash effect
+            this.ctx.fillStyle = shouldFlash ? 'darkred' : color;
             this.ctx.fillRect(10, this.height - 10 - this.player.barSize * i, this.player.barSize * 5, this.player.barSize);
         }
 
-        // Draw energy bar outline
+        // Energy bar outline
         this.ctx.strokeStyle = 'white';
         this.ctx.lineWidth = 2;
         this.ctx.strokeRect(8, this.height - 10 - this.player.barSize * this.player.maxEnergy, this.player.barSize * 5 + 4, this.player.barSize * this.player.maxEnergy + 4);
+        
+        // Active power-up indicators
+        let powerUpY = this.height - 10 - this.player.barSize * this.player.maxEnergy - 30 * this.ratio;
+        
+        // Shield indicator
+        if (this.player.shieldActive) {
+            this.ctx.fillStyle = 'rgba(30, 144, 255, 0.8)';
+            this.ctx.fillRect(10, powerUpY, this.player.barSize * 5, 20 * this.ratio);
+            this.ctx.fillStyle = 'white';
+            this.ctx.font = (this.smallFont * 0.8) + 'px Bungee';
+            this.ctx.fillText("SHIELD", 12, powerUpY + 15 * this.ratio);
+            powerUpY -= 25 * this.ratio;
+        }
+        
+        // Slow time indicator
+        if (this.timeSlowActive) {
+            this.ctx.fillStyle = 'rgba(128, 0, 128, 0.8)';
+            this.ctx.fillRect(10, powerUpY, this.player.barSize * 5, 20 * this.ratio);
+            this.ctx.fillStyle = 'white';
+            this.ctx.font = (this.smallFont * 0.8) + 'px Bungee';
+            this.ctx.fillText("SLOW", 12, powerUpY + 15 * this.ratio);
+        }
 
         this.ctx.restore();
     }
