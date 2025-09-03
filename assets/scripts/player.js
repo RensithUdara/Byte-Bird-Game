@@ -100,6 +100,8 @@ class Player {
                 this.shieldOpacity = 0.2;
             }
         }
+    }
+    
     resize(){
         this.width = this.spriteWidth * this.game.ratio;
         this.height = this.spriteHeight * this.game.ratio;
