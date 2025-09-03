@@ -28,28 +28,78 @@ class Player {
         this.shieldPulseDirection = 1;
     }
     draw(){
+        // Draw player
         this.game.ctx.drawImage(this.image, 0, this.frameY * this.spriteHeight, this.spriteWidth, this.spriteHeight, this.x, this.y, this.width, this.height);
+        
+        // Draw shield if active
+        if (this.shieldActive) {
+            this.game.ctx.save();
+            this.game.ctx.globalAlpha = this.shieldOpacity;
+            this.game.ctx.strokeStyle = 'rgba(30, 144, 255, 0.8)';
+            this.game.ctx.fillStyle = 'rgba(30, 144, 255, 0.3)';
+            this.game.ctx.lineWidth = 3 * this.game.ratio;
+            
+            // Draw shield circle
+            this.game.ctx.beginPath();
+            this.game.ctx.arc(this.collisionX, this.collisionY, this.collisionRadius * 1.5, 0, Math.PI * 2);
+            this.game.ctx.fill();
+            this.game.ctx.stroke();
+            
+            this.game.ctx.restore();
+        }
+        
+        // Draw collision circle in debug mode
         if(this.game.debug){
             this.game.ctx.beginPath();
             this.game.ctx.arc(this.collisionX, this.collisionY, this.collisionRadius, 0, Math.PI * 2);
             this.game.ctx.stroke();
         }
     }
-    update(){
+    update(deltaTime){
         this.handleEnergy();
+        this.handleShield(deltaTime);
+        
         if (this.speedY >= 0) this.wingsUp();
         this.y += this.speedY;
         this.collisionY = this.y + this.height * 0.5;
+        
         if (!this.isTouchingBottom() && !this.charging){
             this.speedY += this.game.gravity;
         } else {
             this.speedY = 0;
         }
+        
         if (this.isTouchingBottom()){
             this.y = this.game.height - this.height - this.game.bottomMargin;
             this.wingsIdle();
         }
     }
+    
+    handleShield(deltaTime) {
+        if (this.shieldActive) {
+            this.shieldTimer -= deltaTime;
+            
+            // Pulse shield effect
+            this.shieldOpacity += this.shieldPulseDirection * this.shieldPulse;
+            if (this.shieldOpacity >= 0.7) {
+                this.shieldOpacity = 0.7;
+                this.shieldPulseDirection = -1;
+            } else if (this.shieldOpacity <= 0.3) {
+                this.shieldOpacity = 0.3;
+                this.shieldPulseDirection = 1;
+            }
+            
+            // Shield time up
+            if (this.shieldTimer <= 0) {
+                this.shieldActive = false;
+                this.game.createFloatingText(this.collisionX, this.collisionY, "SHIELD OFF", "blue");
+            }
+            
+            // Shield almost over warning
+            if (this.shieldTimer <= 1000 && Math.floor(this.shieldTimer / 200) % 2 === 0) {
+                this.shieldOpacity = 0.2;
+            }
+        }
     resize(){
         this.width = this.spriteWidth * this.game.ratio;
         this.height = this.spriteHeight * this.game.ratio;
