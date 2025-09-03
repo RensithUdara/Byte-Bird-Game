@@ -10,21 +10,60 @@ class Obstacle {
         this.collisionX;
         this.collisionY;
         this.collisionRadius;
+        
+        // More obstacle variety based on difficulty
+        let speedMultiplier = 1;
+        if (this.game.difficultyLevel === 2) speedMultiplier = 1.2;
+        if (this.game.difficultyLevel === 3) speedMultiplier = 1.5;
+        
         this.speedY = Math.random() < 0.5 ?
-        -1 * this.game.ratio : 1 * this.game.ratio ;
+            -1 * this.game.ratio * speedMultiplier : 
+            1 * this.game.ratio * speedMultiplier;
+        
+        // Add some horizontal speed variation for harder difficulty
+        this.speedX = 0;
+        if (this.game.difficultyLevel === 3 && Math.random() < 0.3) {
+            this.speedX = (Math.random() * 0.5 - 0.25) * this.game.ratio;
+        }
+        
+        // Add rotation for more dynamic obstacles
+        this.rotation = 0;
+        this.rotationSpeed = (Math.random() * 0.02 - 0.01) * this.game.ratio;
+        
         this.markedForDeletion = false;
         this.image = document.getElementById('smallGears');
         this.frameX = Math.floor(Math.random() * 4);
+        
+        // Add size variation
+        if (this.game.difficultyLevel > 1) {
+            const sizeVariation = Math.random() * 0.4 + 0.8; // 0.8 to 1.2 size
+            this.scaleWidth *= sizeVariation;
+            this.scaleHeight *= sizeVariation;
+        }
     }
 
     update() {
         this.x -= this.game.speed;
+        this.x += this.speedX;  // Add horizontal movement
         this.y += this.speedY;
-        this.collisionX = this.x + this.scaleWidth *0.5;
+        this.rotation += this.rotationSpeed;  // Add rotation
+        
+        this.collisionX = this.x + this.scaleWidth * 0.5;
         this.collisionY = this.y + this.scaleHeight * 0.5;
+        
         if (!this.game.gameOver){
             if (this.y <= 0 || this.y >= this.game.height - this.scaleHeight) {
                 this.speedY *= -1;
+                
+                // Occasionally reverse horizontal direction on bounce for higher difficulties
+                if (this.game.difficultyLevel >= 2 && Math.random() < 0.3) {
+                    this.speedX *= -0.8;
+                }
+            }
+            
+            // Keep obstacles from going too far right
+            if (this.x > this.game.width) {
+                this.speedX = -Math.abs(this.speedX);
             }
         } else {
             this.speedY += 0.1;
@@ -40,9 +79,17 @@ class Obstacle {
             }
         }
         if(this.game.checkCollision(this, this.game.player)){
-            this.game.player.collided = true;
-            this.game.player.stopCharge();
-            this.game.triggerGameOver();
+            // Check if player has shield active
+            if (this.game.player.shieldActive) {
+                this.game.player.shieldActive = false;
+                this.markedForDeletion = true;
+                this.game.createFloatingText(this.collisionX, this.collisionY, "SHIELD BROKEN!", "blue");
+                this.game.createExplosion(this.collisionX, this.collisionY, 10, "blue");
+            } else {
+                this.game.player.collided = true;
+                this.game.player.stopCharge();
+                this.game.triggerGameOver();
+            }
         }
     }
     draw() {
