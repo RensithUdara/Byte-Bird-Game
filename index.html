@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Londrina+Outline&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <canvas id="canvas1"></canvas>
+
+    <div class="controls">
+        <button id="restartButton"><i class="fas fa-redo"></i></button>
+        <button id="fullScreenButton"><i class="fas fa-expand"></i></button>
+        <button id="debugButton"><i class="fas fa-bug"></i></button>
+    </div>
+
+    <div class="assets">
+        <img id="background" src="assets/images/background_single.png" alt="background">
+        <img id="background2" src="assets/images/background_single2.png" alt="background">
+        <img id="player_fish" src="assets/images/player_fish.png" alt="player_fish">
+        <img id="smallGears" src="assets/images/smallGears.png" alt="smallGears">
+        <audio id="charge" src="assets/sounds/charge.mp3"></audio>
+        <audio id="flap1" src="assets/sounds/flap1.mp3"></audio>
+        <audio id="flap2" src="assets/sounds/flap2.mp3"></audio>
+        <audio id="flap3" src="assets/sounds/flap3.mp3"></audio>
+        <audio id="flap4" src="assets/sounds/flap4.mp3"></audio>
+        <audio id="flap5" src="assets/sounds/flap5.mp3"></audio>
+        <audio id="win" src="assets/sounds/win.mp3"></audio>
+        <audio id="lose" src="assets/sounds/lose.mp3"></audio>
+    </div>
+
+    <script src="assets/scripts/audio.js"></script>
+    <script src="assets/scripts/background.js"></script>
+    <script src="assets/scripts/player.js"></script>
+    <script src="assets/scripts/obstacle.js"></script>
+    <script src="assets/scripts/main.js"></script>
+</body>
+</html>
