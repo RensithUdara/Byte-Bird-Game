@@ -124,6 +124,14 @@ class Game {
         });
 
     }
+    createPauseButton() {
+        const pauseButton = document.createElement('button');
+        pauseButton.id = 'pauseButton';
+        pauseButton.innerHTML = '<i class="fas fa-pause"></i>';
+        document.querySelector('.controls').appendChild(pauseButton);
+        return pauseButton;
+    }
+    
     resize(width, height){
         this.canvas.width = width;
         this.canvas.height = height;
@@ -138,32 +146,146 @@ class Game {
         this.smallFont = Math.ceil(20 * this.ratio);
         this.largeFont = Math.ceil(45 * this.ratio);
         this.ctx.font = this.smallFont+'px Bungee';
-        this.gravity = 0.15 * this.ratio;
-        this.speed = 2 * this.ratio;
-        this.minSpeed = this.speed;
-        this.maxSpeed = this.speed * 5;
+        
+        // Apply difficulty settings
+        this.applyDifficultySettings();
+        
         this.background.resize();
         this.player.resize();
         this.createObstacles();
         this.obstacles.forEach(obstacle => {
             obstacle.resize();
         });
+        
+        // Reset game state
+        this.powerUps = [];
+        this.particles = [];
+        this.visualEffects = [];
+        this.powerUpTimer = 0;
+        this.timeSlowActive = false;
+        this.timeSlowTimer = 0;
         this.score = 0;
         this.gameOver = false;
+        this.gamePaused = false;
         this.timer = 0;
     }
+    
+    applyDifficultySettings() {
+        switch(this.difficultyLevel) {
+            case 1: // Easy
+                this.gravity = 0.12 * this.ratio;
+                this.speed = 1.8 * this.ratio;
+                this.powerUpInterval = 8000; // More frequent power-ups
+                break;
+            case 2: // Medium (default)
+                this.gravity = 0.15 * this.ratio;
+                this.speed = 2 * this.ratio;
+                this.powerUpInterval = 10000;
+                break;
+            case 3: // Hard
+                this.gravity = 0.18 * this.ratio;
+                this.speed = 2.5 * this.ratio;
+                this.powerUpInterval = 15000; // Less frequent power-ups
+                break;
+        }
+        this.minSpeed = this.speed;
+        this.maxSpeed = this.speed * 5;
+    }
+    
+    setDifficulty(level) {
+        if (level >= 1 && level <= 3) {
+            this.difficultyLevel = level;
+            localStorage.setItem('flappyDifficulty', level.toString());
+            this.applyDifficultySettings();
+        }
+    }
     render(deltaTime){
-        if(!this.gameOver) this.timer += deltaTime;
-        this.handlePeriodicEvents(deltaTime);
-        this.background.update();
+        if(!this.gameOver && !this.gamePaused) {
+            this.timer += deltaTime;
+            this.handlePeriodicEvents(deltaTime);
+            this.handlePowerUpGeneration(deltaTime);
+            this.handleTimeSlowEffect(deltaTime);
+            
+            this.background.update();
+            this.player.update(deltaTime);
+            
+            // Update obstacles
+            this.obstacles.forEach(obstacle => {
+                obstacle.update();
+            });
+            
+            // Update power-ups
+            this.powerUps.forEach(powerUp => {
+                powerUp.update();
+            });
+            this.powerUps = this.powerUps.filter(powerUp => !powerUp.markedForDeletion);
+            
+            // Update particles
+            this.particles.forEach(particle => {
+                particle.update(deltaTime);
+            });
+            this.particles = this.particles.filter(particle => !particle.markedForDeletion);
+            
+            // Update visual effects (floating text)
+            this.visualEffects.forEach(effect => {
+                effect.update(deltaTime);
+            });
+            this.visualEffects = this.visualEffects.filter(effect => !effect.markedForDeletion);
+        }
+        
+        // Always draw even when paused
         this.background.draw();
-        this.drawStatusText();
-        this.player.update();
-        this.player.draw();
+        
         this.obstacles.forEach(obstacle => {
-            obstacle.update();
             obstacle.draw();
         });
+        
+        this.powerUps.forEach(powerUp => {
+            powerUp.draw();
+        });
+        
+        this.particles.forEach(particle => {
+            particle.draw();
+        });
+        
+        this.player.draw();
+        
+        this.visualEffects.forEach(effect => {
+            effect.draw();
+        });
+        
+        this.drawStatusText();
+        
+        if (this.gamePaused && !this.gameOver) {
+            this.drawPauseMenu();
+        }
+    }
+    
+    handlePowerUpGeneration(deltaTime) {
+        // Generate power-ups periodically
+        if (this.powerUpTimer < this.powerUpInterval) {
+            this.powerUpTimer += deltaTime;
+        } else {
+            this.powerUpTimer = 0;
+            
+            // Only generate if there aren't too many on screen
+            if (this.powerUps.length < 3) {
+                const powerUpX = this.width + Math.random() * this.width * 0.5;
+                this.powerUps.push(new PowerUp(this, powerUpX));
+            }
+        }
+    }
+    
+    handleTimeSlowEffect(deltaTime) {
+        if (this.timeSlowActive) {
+            this.timeSlowTimer -= deltaTime;
+            
+            if (this.timeSlowTimer <= 0) {
+                this.timeSlowActive = false;
+                this.speed = this.originalSpeed;
+                this.createFloatingText(this.player.collisionX, this.player.collisionY, "SPEED NORMAL", "purple");
+            }
+        }
     }
     createObstacles(){
         this.obstacles = [];
