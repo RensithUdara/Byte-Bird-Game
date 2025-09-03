@@ -1,7 +1,5 @@
 # Byte Bird Game
 
-![Byte Bird Game](assets/images/player_fish.png)
-
 A modern and enhanced version of the classic Flappy Bird game, featuring multiple power-ups, difficulty levels, and visual effects.
 
 ## 🎮 Play Now
