@@ -93,12 +93,46 @@ class Obstacle {
         }
     }
     draw() {
-        this.game.ctx.drawImage(this.image, this.frameX * this.spriteWidth, 0, this.spriteWidth, this.spriteHeight, this.x, this.y, this.scaleWidth, this.scaleHeight);
+        this.game.ctx.save();
+        
+        // Apply rotation if needed
+        if (this.rotation !== 0) {
+            this.game.ctx.translate(this.x + this.scaleWidth * 0.5, this.y + this.scaleHeight * 0.5);
+            this.game.ctx.rotate(this.rotation);
+            this.game.ctx.drawImage(
+                this.image, 
+                this.frameX * this.spriteWidth, 
+                0, 
+                this.spriteWidth, 
+                this.spriteHeight, 
+                -this.scaleWidth * 0.5, 
+                -this.scaleHeight * 0.5, 
+                this.scaleWidth, 
+                this.scaleHeight
+            );
+        } else {
+            // Normal draw without rotation
+            this.game.ctx.drawImage(
+                this.image, 
+                this.frameX * this.spriteWidth, 
+                0, 
+                this.spriteWidth, 
+                this.spriteHeight, 
+                this.x, 
+                this.y, 
+                this.scaleWidth, 
+                this.scaleHeight
+            );
+        }
+        
+        // Draw debug collision circle
         if(this.game.debug) {
             this.game.ctx.beginPath();
             this.game.ctx.arc(this.collisionX, this.collisionY, this.collisionRadius, 0, Math.PI * 2);
             this.game.ctx.stroke();
         }
+        
+        this.game.ctx.restore();
     }
     resize() {
         this.scaledWidth = this.spriteWidth * this.game.ratio;
