@@ -10,12 +10,16 @@ class Game {
         this.player = new Player(this);
         this.sound = new AudioControl();
         this.obstacles = [];
+        this.powerUps = [];
+        this.particles = [];
+        this.visualEffects = [];
         this.numberOfObstacles = 2000;
         this.gravity;
         this.speed;
         this.minSpeed;
         this.maxSpeed;
         this.score;
+        this.highScore = localStorage.getItem('flappyHighScore') ? parseInt(localStorage.getItem('flappyHighScore')) : 0;
         this.finalScore;
         this.gameOver;
         this.bottomMargin;
@@ -30,9 +34,17 @@ class Game {
         this.touchStartX;
         this.swipeDistance = 50;
         this.debug = false;
+        this.gamePaused = false;
+        this.difficultyLevel = localStorage.getItem('flappyDifficulty') ? parseInt(localStorage.getItem('flappyDifficulty')) : 1; // 1=Easy, 2=Medium, 3=Hard
+        this.powerUpTimer = 0;
+        this.powerUpInterval = 10000; // Power-up every 10 seconds
+        this.timeSlowActive = false;
+        this.timeSlowTimer = 0;
+        this.originalSpeed = 0;
         this.restartButton = document.getElementById('restartButton');
         this.fullScreenButton = document.getElementById('fullScreenButton');
         this.debugButton = document.getElementById('debugButton');
+        this.pauseButton = document.getElementById('pauseButton') || this.createPauseButton();
 
 
         this.resize(window.innerWidth, window.innerHeight);
@@ -51,10 +63,20 @@ class Game {
         this.debugButton.addEventListener('click', e => {
             this.debug = !this.debug;
         });
+        if (this.pauseButton) {
+            this.pauseButton.addEventListener('click', e => {
+                this.togglePause();
+            });
+        }
 
         // mouse
         this.canvas.addEventListener('mousedown', e => {
-            this.player.flap();
+            if (!this.gamePaused) {
+                this.player.flap();
+            } else {
+                // Check if click is on the difficulty buttons
+                this.handleDifficultyClick(e.offsetX, e.offsetY);
+            }
         });
         this.canvas.addEventListener('mouseup', e => {
             setTimeout(() => {
@@ -64,15 +86,22 @@ class Game {
 
         // keyboard
         window.addEventListener('keydown', e => {
-            if(e.key===' ' || e.key==='Enter'){
+            if ((e.key===' ' || e.key==='Enter') && !this.gamePaused){
                 this.player.flap();
             }
-            if(e.key === 'Shift' || e.key.toLowerCase() === 'c'){
+            if ((e.key === 'Shift' || e.key.toLowerCase() === 'c') && !this.gamePaused){
                 this.player.startCharge();
             }
             if (e.key.toLowerCase() === 'r') this.resize(window.innerWidth, window.innerHeight);
             if (e.key.toLowerCase() === 'f') this.toggleFullScreen();
             if (e.key.toLowerCase() === 'd') this.debug = !this.debug;
+            if (e.key.toLowerCase() === 'p') this.togglePause();
+            
+            // Difficulty selection with number keys (1-3)
+            if (this.gamePaused && e.key >= '1' && e.key <= '3') {
+                this.setDifficulty(parseInt(e.key));
+                this.togglePause();
+            }
         });
         window.addEventListener('keyup', e => {
             this.player.wingsUp();
